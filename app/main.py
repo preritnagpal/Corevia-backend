@@ -37,8 +37,21 @@ app.add_middleware(
 load_dotenv()
 def init_earth_engine():
     try:
-        ee.Initialize(project=os.getenv("GEE_PROJECT_ID"))
-        print("✅ Earth Engine initialized")
+        creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        project_id = os.getenv("GEE_PROJECT_ID")
+
+        if not creds_path or not project_id:
+            print("❌ EE env vars missing")
+            return
+
+        credentials = ee.ServiceAccountCredentials(
+            email=None,            # email json se auto-read hota hai
+            key_file=creds_path
+        )
+
+        ee.Initialize(credentials, project=project_id)
+        print("✅ Earth Engine initialized with service account")
+
     except Exception as e:
         print("❌ Earth Engine init failed:", e)
 
@@ -977,3 +990,4 @@ def all_alerts(factoryId: str):
     return {
         "alerts": alerts
     }
+
