@@ -35,7 +35,18 @@ app.add_middleware(
 # ENV + EARTH ENGINE
 # --------------------------------------------------
 load_dotenv()
-ee.Initialize(project=os.getenv("GEE_PROJECT_ID"))
+def init_earth_engine():
+    try:
+        ee.Initialize(project=os.getenv("GEE_PROJECT_ID"))
+        print("✅ Earth Engine initialized")
+    except Exception as e:
+        print("❌ Earth Engine init failed:", e)
+
+
+@app.on_event("startup")
+def on_startup():
+    init_earth_engine()
+
 
 # --------------------------------------------------
 # DB
@@ -568,7 +579,11 @@ def health():
 
 @app.post("/satellite/daily-ingest")
 def daily_ingest(payload: IngestRequest):
-    factory_id = ObjectId(payload.factoryId)
+    try:
+        factory_id = ObjectId(payload.factoryId)
+    except:
+        raise HTTPException(400, "Invalid factoryId")
+
 
     user = users.find_one({"_id": factory_id})
     if not user:
