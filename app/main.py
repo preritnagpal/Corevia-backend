@@ -10,6 +10,7 @@ from bson.errors import InvalidId
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+from google.oauth2 import service_account
 
 
 # --------------------------------------------------
@@ -25,6 +26,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://corevia-frontend.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],   # 👈 OPTIONS allowed
@@ -35,6 +37,8 @@ app.add_middleware(
 # ENV + EARTH ENGINE
 # --------------------------------------------------
 load_dotenv()
+
+
 def init_earth_engine():
     try:
         creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -44,9 +48,9 @@ def init_earth_engine():
             print("❌ EE env vars missing")
             return
 
-        credentials = ee.ServiceAccountCredentials(
-            email=None,            # email json se auto-read hota hai
-            key_file=creds_path
+        credentials = service_account.Credentials.from_service_account_file(
+            creds_path,
+            scopes=["https://www.googleapis.com/auth/earthengine"]
         )
 
         ee.Initialize(credentials, project=project_id)
@@ -59,7 +63,6 @@ def init_earth_engine():
 @app.on_event("startup")
 def on_startup():
     init_earth_engine()
-
 
 # --------------------------------------------------
 # DB
@@ -990,4 +993,5 @@ def all_alerts(factoryId: str):
     return {
         "alerts": alerts
     }
+
 
