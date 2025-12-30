@@ -23,11 +23,7 @@ app = FastAPI(title="Factory Environmental Intelligence")
 # --------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://corevia-frontend.vercel.app"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],   # 👈 OPTIONS allowed
     allow_headers=["*"],
@@ -993,5 +989,6 @@ def all_alerts(factoryId: str):
     return {
         "alerts": alerts
     }
+
 
 
