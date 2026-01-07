@@ -461,11 +461,11 @@ def ingest_for_date(factory_id, lat, lon, date_obj, factory_type="generic"):
         return "skipped"
 
     # ================= GASES (ALREADY SAFE FLOATS) =================
-    gases = fetch_all_gases(lat, lon)   # MUST return floats only
+    gases = fetch_all_gases(lat, lon, date_obj)   # MUST return floats only
 
     # ================= THERMAL (FETCH ONCE) =================
     try:
-        thermal_raw = fetch_thermal_safe(lat, lon)
+        thermal_raw = fetch_thermal_safe(lat, lon, date_obj)
 
         # normalize → python dict
         if hasattr(thermal_raw, "getInfo"):
@@ -989,6 +989,7 @@ def all_alerts(factoryId: str):
     return {
         "alerts": alerts
     }
+
 
 
 
