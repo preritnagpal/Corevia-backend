@@ -40,7 +40,6 @@ def _to_float(val):
 # =====================================================
 # CORE FETCH (WITH DATE WINDOW)
 # =====================================================
-
 def _first_daily(collection, band, date, lon, lat, scale):
 
     try:
@@ -48,17 +47,22 @@ def _first_daily(collection, band, date, lon, lat, scale):
         start = date.advance(-3, "day")
         end = date.advance(1, "day")
 
-        img = (
+        col = (
             ee.ImageCollection(collection)
             .select(band)
             .filterDate(start, end)
-            .sort("system:time_start", False)
-            .first()
         )
+
+        count = col.size().getInfo()
+
+        if count == 0:
+            return 0.0
+
+        img = col.sort("system:time_start", False).first()
 
         region = img.reduceRegion(
             reducer=ee.Reducer.mean(),
-            geometry=ee.Geometry.Point([lon, lat]),
+            geometry=ee.Geometry.Point([lon, lat]).buffer(10000),
             scale=scale,
             maxPixels=1e9
         )
@@ -191,5 +195,6 @@ def fetch_thermal_safe(lat, lon, date_obj=None):
         "day": daily_lst("LST_Day_1km"),
         "night": daily_lst("LST_Night_1km")
     }
+
 
 
