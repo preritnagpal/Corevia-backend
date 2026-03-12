@@ -6,15 +6,25 @@ from datetime import datetime
 # =====================================================
 
 def _reduce_mean(img, lon, lat, scale):
-    return img.reduceRegion(
-        reducer=ee.Reducer.mean(),
-        geometry=ee.Geometry.Point([lon, lat]),
-        scale=scale,
-        maxPixels=1e9
-    )
+    try:
+        return img.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=ee.Geometry.Point([lon, lat]),
+            scale=scale,
+            maxPixels=1e9
+        )
+    except:
+        return None
+
 
 def _safe_get(region, key):
-    return ee.Algorithms.If(region.contains(key), region.get(key), None)
+    try:
+        if region is None:
+            return None
+        return ee.Algorithms.If(region.contains(key), region.get(key), None)
+    except:
+        return None
+
 
 def _to_float(val):
     try:
@@ -27,19 +37,34 @@ def _to_float(val):
         return 0.0
 
 
+# =====================================================
+# CORE FETCH (WITH DATE WINDOW)
+# =====================================================
+
 def _first_daily(collection, band, date, lon, lat, scale):
+
+    start = date.advance(-3, "day")
+    end = date.advance(1, "day")
+
     img = (
         ee.ImageCollection(collection)
         .select(band)
-        .filterDate(date, date.advance(1, "day"))
+        .filterDate(start, end)
         .sort("system:time_start", False)
         .first()
     )
-    return _to_float(_safe_get(_reduce_mean(img, lon, lat, scale), band))
+
+    if img is None:
+        return 0.0
+
+    region = _reduce_mean(img, lon, lat, scale)
+    val = _safe_get(region, band)
+
+    return _to_float(val)
 
 
 # =====================================================
-# DAILY ONLY — MULTI SATELLITE FALLBACK
+# GAS FETCH
 # =====================================================
 
 def fetch_all_gases(lat, lon, date_obj=None):
@@ -113,6 +138,12 @@ def fetch_all_gases(lat, lon, date_obj=None):
         "co": co,
         "pm25": pm25
     }
+
+
+# =====================================================
+# THERMAL FETCH
+# =====================================================
+
 def fetch_thermal_safe(lat, lon, date_obj=None):
 
     if not date_obj:
@@ -120,16 +151,29 @@ def fetch_thermal_safe(lat, lon, date_obj=None):
 
     date = ee.Date(date_obj)
 
+    start = date.advance(-3, "day")
+    end = date.advance(1, "day")
+
     def daily_lst(band):
+
         img = (
             ee.ImageCollection("NOAA/VIIRS/001/VNP21A1D")
             .select(band)
-            .filterDate(date, date.advance(1, "day"))
+            .filterDate(start, end)
             .sort("system:time_start", False)
             .first()
         )
-        val = _safe_get(_reduce_mean(img, lon, lat, 1000), band)
-        return _to_float(ee.Number(val).multiply(0.02) if val else None)
+
+        if img is None:
+            return 0.0
+
+        region = _reduce_mean(img, lon, lat, 1000)
+        val = _safe_get(region, band)
+
+        try:
+            return _to_float(ee.Number(val).multiply(0.02))
+        except:
+            return 0.0
 
     return {
         "day": daily_lst("LST_Day_1km"),
