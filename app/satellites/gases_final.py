@@ -169,7 +169,7 @@ def fetch_thermal_safe(lat, lon, date_obj=None):
     def daily_lst(band):
 
         img = (
-            ee.ImageCollection("NOAA/VIIRS/001/VNP21A1D")
+            ee.ImageCollection("NASA/VIIRS/002/VNP21A1D")
             .select(band)
             .filterDate(start, end)
             .sort("system:time_start", False)
@@ -191,4 +191,5 @@ def fetch_thermal_safe(lat, lon, date_obj=None):
         "day": daily_lst("LST_Day_1km"),
         "night": daily_lst("LST_Night_1km")
     }
+
 
