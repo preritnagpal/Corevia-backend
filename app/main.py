@@ -990,6 +990,34 @@ def all_alerts(factoryId: str):
         "alerts": alerts
     }
 
+@app.get("/debug/no2")
+def debug_no2():
+
+    point = ee.Geometry.Point([73.0154, 21.6264]).buffer(10000)
+
+    col = (
+        ee.ImageCollection("COPERNICUS/S5P/OFFL/L3_NO2")
+        .select("tropospheric_NO2_column_number_density")
+        .filterDate("2026-03-01", "2026-03-10")
+    )
+
+    count = col.size().getInfo()
+
+    img = col.mean()
+
+    val = img.reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=point,
+        scale=7000
+    ).get("tropospheric_NO2_column_number_density")
+
+    if hasattr(val, "getInfo"):
+        val = val.getInfo()
+
+    return {
+        "images_found": count,
+        "no2": val
+    }
 
 
 
