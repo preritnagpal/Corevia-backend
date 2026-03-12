@@ -43,24 +43,36 @@ def _to_float(val):
 
 def _first_daily(collection, band, date, lon, lat, scale):
 
-    start = date.advance(-3, "day")
-    end = date.advance(1, "day")
+    try:
 
-    img = (
-        ee.ImageCollection(collection)
-        .select(band)
-        .filterDate(start, end)
-        .sort("system:time_start", False)
-        .first()
-    )
+        start = date.advance(-3, "day")
+        end = date.advance(1, "day")
 
-    if img is None:
+        img = (
+            ee.ImageCollection(collection)
+            .select(band)
+            .filterDate(start, end)
+            .sort("system:time_start", False)
+            .first()
+        )
+
+        region = img.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=ee.Geometry.Point([lon, lat]),
+            scale=scale,
+            maxPixels=1e9
+        )
+
+        val = region.get(band)
+
+        if hasattr(val, "getInfo"):
+            val = val.getInfo()
+
+        return float(val) if val is not None else 0.0
+
+    except Exception as e:
+        print("Satellite fetch error:", e)
         return 0.0
-
-    region = _reduce_mean(img, lon, lat, scale)
-    val = _safe_get(region, band)
-
-    return _to_float(val)
 
 
 # =====================================================
@@ -179,3 +191,4 @@ def fetch_thermal_safe(lat, lon, date_obj=None):
         "day": daily_lst("LST_Day_1km"),
         "night": daily_lst("LST_Night_1km")
     }
+
