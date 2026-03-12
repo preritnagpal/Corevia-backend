@@ -53,12 +53,11 @@ def _first_daily(collection, band, date, lon, lat, scale):
             .filterDate(start, end)
         )
 
-        count = col.size().getInfo()
-
-        if count == 0:
+        # ensure collection has images
+        if col.size().getInfo() == 0:
             return 0.0
 
-        img = col.sort("system:time_start", False).first()
+        img = col.mean()   # 🔥 IMPORTANT FIX
 
         region = img.reduceRegion(
             reducer=ee.Reducer.mean(),
@@ -72,7 +71,7 @@ def _first_daily(collection, band, date, lon, lat, scale):
         if hasattr(val, "getInfo"):
             val = val.getInfo()
 
-        return float(val) if val is not None else 0.0
+        return float(val) if val else 0.0
 
     except Exception as e:
         print("Satellite fetch error:", e)
@@ -195,6 +194,7 @@ def fetch_thermal_safe(lat, lon, date_obj=None):
         "day": daily_lst("LST_Day_1km"),
         "night": daily_lst("LST_Night_1km")
     }
+
 
 
 
