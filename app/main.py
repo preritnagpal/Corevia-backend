@@ -679,7 +679,7 @@ def backfill(payload: dict):
     inserted, skipped = 0, 0
 
     for i in range(days):
-        date_obj = datetime.utcnow() - timedelta(days=i)
+        date_obj = datetime.utcnow() - timedelta(days=i + 2)
         result = ingest_for_date(factory_id, lat, lon, date_obj)
 
         if result == "inserted":
@@ -989,6 +989,7 @@ def all_alerts(factoryId: str):
     return {
         "alerts": alerts
     }
+
 
 
 
