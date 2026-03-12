@@ -607,7 +607,7 @@ def daily_ingest(payload: IngestRequest):
     except:
         raise HTTPException(400, "Invalid lat/lon")
 
-    today = datetime.utcnow()
+    today = datetime.utcnow() - timedelta(days=2)
 
     factory_type = user["data"].get("factoryType", "generic")
 
@@ -989,6 +989,7 @@ def all_alerts(factoryId: str):
     return {
         "alerts": alerts
     }
+
 
 
 
