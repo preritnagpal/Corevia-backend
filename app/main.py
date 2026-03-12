@@ -1019,7 +1019,28 @@ def debug_no2():
         "no2": val
     }
 
+@app.get("/debug/no2-mean")
+def debug_no2_mean():
 
+    point = ee.Geometry.Point([73.0154, 21.6264]).buffer(10000)
 
+    col = (
+        ee.ImageCollection("COPERNICUS/S5P/OFFL/L3_NO2")
+        .select("tropospheric_NO2_column_number_density")
+        .filterDate("2026-03-01", "2026-03-10")
+    )
+
+    img = col.mean()
+
+    val = img.reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=point,
+        scale=7000
+    ).get("tropospheric_NO2_column_number_density")
+
+    if hasattr(val, "getInfo"):
+        val = val.getInfo()
+
+    return {"no2_mean": val}
 
 
